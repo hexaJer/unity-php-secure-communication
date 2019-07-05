@@ -84,7 +84,7 @@ public class EncryptController : MonoBehaviour
         var form = new WWWForm();
         form.AddField("decrypt", text);
 
-        using (var www = UnityWebRequest.Post("https://dev.payment-contest.fr/php/testencrypt.php", form))
+        using (var www = UnityWebRequest.Post(ScriptUrl, form))
         {
             yield return www.SendWebRequest();
 
