@@ -15,8 +15,6 @@
  *  curl -b cookie.txt -d "decrypt=`cat encrypted.txt`" http://exemple.com//encrypt.php
  */
 
-session_start();
-
 include 'vendor/autoload.php';
 use phpseclib\Crypt\RSA;
 
@@ -50,9 +48,10 @@ function decrypt($encrypted){
     return $rsa->decrypt($bytesCipherText);
 }
 
-if (isset($_POST['session'])) {
-    echo $_COOKIE['PHPSESSID'];
+if (isset($_POST['session_id'])) {
+    session_id($_POST['session_id']);
 }
+session_start();
 
 if (isset($_POST['keygen'])) {
     echo generateKeyPair();
