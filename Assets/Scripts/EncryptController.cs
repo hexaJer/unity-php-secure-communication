@@ -60,10 +60,10 @@ public class EncryptController : MonoBehaviour
         using (var www = UnityWebRequest.Post(ScriptUrl, form))
         {
             yield return www.SendWebRequest();
-
-            if (www.isNetworkError)
+            if (www.isNetworkError || www.isHttpError)
             {
-                Debug.LogError(www.error);
+                Debug.LogError(www.url + " : " + www.error);
+                Debug.LogWarning("Have you defined ScriptUrl correctly?");
             }
             else
             {
@@ -87,9 +87,9 @@ public class EncryptController : MonoBehaviour
             //www.SetRequestHeader("cookie", SessionIdText.text);
             yield return www.SendWebRequest();
 
-            if (www.isNetworkError)
+            if (www.isNetworkError || www.isHttpError)
             {
-                Debug.LogError(www.error);
+                Debug.LogError(www.url + " : " + www.error);
             }
             else
             {

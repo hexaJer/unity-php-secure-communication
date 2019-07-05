@@ -415,7 +415,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b90e9ce7672277c42aca9c0a291b11cd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ScriptUrl: https://dev.payment-contest.fr/php/testencrypt.php
+  ScriptUrl: 'http://example.com/encrypt.php
+
+'
   ClearTextInputField: {fileID: 764258704}
   EncryptedTextInputField: {fileID: 1264997269}
   ClearResponseInputField: {fileID: 1971998293}
