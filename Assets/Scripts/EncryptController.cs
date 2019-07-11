@@ -94,7 +94,6 @@ public class EncryptController : MonoBehaviour
     {
         var form = new WWWForm();
         form.AddField("decrypt", text);
-        form.AddField("clearText", ClearTextInputField.text);
         form.AddField("session_id", AnalyticsSessionInfo.sessionId.ToString());
         SessionIdText.text = "sessionId=" + AnalyticsSessionInfo.sessionId.ToString();
         
