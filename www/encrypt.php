@@ -1,5 +1,15 @@
 <?php
+
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 /**
+ * test with web browser
+ *
+ *  go to `http://exemple.com//encrypt.php?test=my text to encode`
+ *
+ *
  * test with curl:
  *
  *  // Generate keypair : return XML public key
@@ -18,6 +28,27 @@
 include 'vendor/autoload.php';
 use phpseclib\Crypt\RSA;
 
+function isJsonRequest(){
+    $accept = strtolower(str_replace(' ', '', $_SERVER['HTTP_ACCEPT']));
+    $accept = explode(',', $accept);
+    return $accept[0] == "application/json";
+}
+
+function response($data, $message=null){
+    $response = array(
+        "data" => $data
+    );
+    if ($message) {
+        $response["message"] = $message;
+    }
+    if (isJsonRequest()){
+        header('Content-Type: application/json');
+        echo json_encode($response);
+        return;
+    }
+    echo $data;
+}
+
 function generateKeyPair(){
     if (!isset($_SESSION['publickey'])){
         $rsa = new RSA();
@@ -30,12 +61,12 @@ function generateKeyPair(){
     return $_SESSION['publickey'];
 }
 
-function encrypt($cleartext){
+function encrypt($clearText){
     $rsa = new RSA();
     $rsa->setEncryptionMode(RSA::ENCRYPTION_PKCS1);
     $rsa->setPublicKeyFormat(RSA::PUBLIC_FORMAT_XML);
     $rsa->loadKey($_SESSION['publickey']);
-    $bytesCipherText = $rsa->encrypt($cleartext);
+    $bytesCipherText = $rsa->encrypt($clearText);
     return rawurlencode(base64_encode($bytesCipherText));
 }
 
@@ -45,7 +76,8 @@ function decrypt($encrypted){
     $rsa->setPrivateKeyFormat(RSA::PRIVATE_FORMAT_XML);
     $rsa->loadKey($_SESSION['privatekey']);
     $bytesCipherText = base64_decode(rawurldecode($encrypted));
-    return $rsa->decrypt($bytesCipherText);
+    $clearText = $rsa->decrypt($bytesCipherText);
+    return $clearText;
 }
 
 if (isset($_POST['session_id'])) {
@@ -54,25 +86,28 @@ if (isset($_POST['session_id'])) {
 session_start();
 
 if (isset($_POST['keygen'])) {
-    echo generateKeyPair();
+    response(generateKeyPair());
     exit();
 }
 
 if (isset($_POST['encrypt'])) {
-    echo encrypt($_POST['encrypt']);
+    response(encrypt($_POST['encrypt']));
     exit();
 }
 
 if (isset($_POST['decrypt'])) {
-    echo decrypt($_POST['decrypt']);
+    $clearText = decrypt($_POST['decrypt']);
+    response($clearText);
     exit();
 }
 
-if (isset($_POST['test'])) {
+if (isset($_REQUEST['test'])) {
     generateKeyPair();
-    $ciphertext = encrypt($_POST['test']);
-    echo "encrypted: $ciphertext\n\n";
+    $ciphertext = encrypt($_REQUEST['test']);
+    echo "<pre>\n";
+    echo "encrypted: $ciphertext\n";
     $clearText = decrypt($ciphertext);
     echo "decrypted: $clearText\n";
+    echo "</pre>\n";
     exit();
 }

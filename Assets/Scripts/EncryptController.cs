@@ -1,15 +1,23 @@
 ﻿using System;
 using System.Collections;
+using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 using UnityEngine;
 using UnityEngine.Analytics;
 using UnityEngine.Networking;
 using UnityEngine.UI;
 
-
 public class EncryptController : MonoBehaviour
 {
+    
+    [Serializable]
+    public struct Response
+    {
+        public string data;
+    }
+
     public string ScriptUrl = "http://example.com/encrypt.php";
 
     public InputField ClearTextInputField;
@@ -33,8 +41,9 @@ public class EncryptController : MonoBehaviour
         }
         var csp = new RSACryptoServiceProvider(1024);
         csp.FromXmlString(PublicKeyText.text);
+
         var plainTextData = ClearTextInputField.text;
-        var bytesPlainTextData = Encoding.Unicode.GetBytes(plainTextData);
+        var bytesPlainTextData = Encoding.UTF8.GetBytes(plainTextData);
         var bytesCypherText = csp.Encrypt(bytesPlainTextData, false);
         var cypherText = Convert.ToBase64String(bytesCypherText);
         EncryptedTextInputField.text = cypherText;
@@ -59,6 +68,9 @@ public class EncryptController : MonoBehaviour
 
         using (var www = UnityWebRequest.Post(ScriptUrl, form))
         {
+            www.SetRequestHeader("Accept", "application/json");
+
+            Debug.Log("Send form request to " + ScriptUrl + "\n" + Encoding.Default.GetString(form.data));
             yield return www.SendWebRequest();
             if (www.isNetworkError || www.isHttpError)
             {
@@ -68,9 +80,12 @@ public class EncryptController : MonoBehaviour
             else
             {
                 LogHeaders(www);
-                
+
+                // Print Body
                 Debug.Log(www.downloadHandler.text);
-                PublicKeyText.text = www.downloadHandler.text;
+                var response = JsonUtility.FromJson<Response>(www.downloadHandler.text);
+                Debug.Log(response.data);
+                PublicKeyText.text = response.data;
             }
         }
     }
@@ -79,12 +94,15 @@ public class EncryptController : MonoBehaviour
     {
         var form = new WWWForm();
         form.AddField("decrypt", text);
+        form.AddField("clearText", ClearTextInputField.text);
         form.AddField("session_id", AnalyticsSessionInfo.sessionId.ToString());
         SessionIdText.text = "sessionId=" + AnalyticsSessionInfo.sessionId.ToString();
-
+        
         using (var www = UnityWebRequest.Post(ScriptUrl, form))
         {
-            //www.SetRequestHeader("cookie", SessionIdText.text);
+            www.SetRequestHeader("Accept", "application/json");
+
+            Debug.Log("Send form request to " + ScriptUrl + "\n" + Encoding.Default.GetString(form.data));
             yield return www.SendWebRequest();
 
             if (www.isNetworkError || www.isHttpError)
@@ -97,7 +115,9 @@ public class EncryptController : MonoBehaviour
 
                 // Print Body
                 Debug.Log(www.downloadHandler.text);
-                ClearResponseInputField.text = www.downloadHandler.text;
+                var response = JsonUtility.FromJson<Response>(www.downloadHandler.text);
+                Debug.Log(response.data);
+                ClearResponseInputField.text = response.data;
             }
         }
     }
